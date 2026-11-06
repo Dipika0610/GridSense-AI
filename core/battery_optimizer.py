@@ -1,17 +1,18 @@
 """
 GridSense AI - Layer 2A: Battery Storage Optimization (Supply Arm)
-Formulated as a high-performance Linear Program (LP) using SciPy's HiGHS solver.
+Formulated as a Linear Program (LP) using SciPy's HiGHS solver.
+Calibrated for Indian C&I (Commercial & Industrial) Battery Systems and MERC ToD Tariffs.
 
 Key Capabilities:
-- Arbitrage Logic: Charge when clean/cheap, discharge when costly/peaking.
+- Arbitrage Logic: Charge when clean/cheap, discharge during peak tariff hours (18:00 - 22:00).
 - Solves the 'Battery Paradox': Enforces clean-only charging, preventing charging
-  from dirty fossil peakers during low-price night hours.
+  from dirty coal baseload during night hours (which is ~750 gCO2/kWh in India!).
 - Enforces physical battery constraints:
   * Energy capacity limits (kWh)
   * Inverter charge/discharge rate limits (kW)
   * Round-trip efficiency losses (charge/discharge)
   * Minimum and Maximum State of Charge (SoC) for battery cycle life
-- Supports multi-objective weight alpha: balances Cost minimization vs. Carbon abatement.
+- Supports multi-objective weight alpha: balances Cost minimization (₹) vs. Carbon abatement.
 """
 
 import numpy as np
@@ -23,13 +24,13 @@ from typing import Dict, Any, Optional
 class BatteryOptimizer:
     def __init__(
         self,
-        capacity_kwh: float = 600.0,
-        max_power_kw: float = 200.0,
+        capacity_kwh: float = 500.0,
+        max_power_kw: float = 150.0,
         roundtrip_efficiency: float = 0.90,
         soc_min_pct: float = 0.15,
         soc_max_pct: float = 0.95,
         soc_initial_pct: float = 0.25,
-        degradation_cost_per_kwh: float = 0.008,  # battery cycling wear cost ($/kWh)
+        degradation_cost_per_kwh: float = 0.65,  # battery cycling wear cost in ₹/kWh
     ):
         self.capacity_kwh = capacity_kwh
         self.max_power_kw = max_power_kw
@@ -43,23 +44,22 @@ class BatteryOptimizer:
     def optimize_dispatch(
         self,
         horizon_df: pd.DataFrame,
-        alpha_cost: float = 0.6,  # 1.0 = pure cost, 0.0 = pure carbon, 0.6 = balanced
+        alpha_cost: float = 0.6,  # 1.0 = pure cost (₹), 0.0 = pure carbon, 0.6 = balanced
         enforce_clean_charging: bool = True
     ) -> pd.DataFrame:
         """
-        Solves the optimal battery dispatch over the forecast horizon using HiGHS LP solver.
+        Solves optimal battery dispatch over the forecast horizon using HiGHS LP solver.
         """
         T = len(horizon_df)
         time_steps = list(range(T))
 
-        # Extract forecasted signals
         gen = horizon_df.get("forecast_total_renewable_kw", horizon_df["total_renewable_kw"]).values
         base_demand = horizon_df.get("baseline_demand_kw", np.zeros(T)).values
         price = horizon_df.get("forecast_electricity_price_kwh", horizon_df["electricity_price_kwh"]).values
         carbon = horizon_df.get("forecast_grid_carbon_intensity", horizon_df["grid_carbon_intensity"]).values
 
-        # Carbon conversion factor ($ per gCO2 based on $100/tonne Social Cost of Carbon = $0.0001/g)
-        carbon_cost_weight = 0.00012
+        # Carbon conversion factor in ₹: ~₹4,000 / tonne CO2 = ₹0.004 / gCO2
+        carbon_cost_weight = 0.0040
 
         # Variable indexing:
         # 0*T to 1*T: P_ch (kW)
@@ -70,59 +70,46 @@ class BatteryOptimizer:
         n_vars = 5 * T
         c = np.zeros(n_vars)
 
-        # Objective coefficients:
         for t in range(T):
-            # Degradation cost on charge/discharge
             c[0 * T + t] = self.deg_cost
             c[1 * T + t] = self.deg_cost
-            # Grid import cost + carbon footprint
             cost_term = alpha_cost * price[t]
             carbon_term = (1.0 - alpha_cost) * carbon[t] * carbon_cost_weight
             c[3 * T + t] = cost_term + carbon_term
-            # Curtailment penalty
-            c[4 * T + t] = 0.05
+            c[4 * T + t] = 2.50  # Curtailment penalty in ₹/kWh
 
-        # Variable Bounds
         bounds = []
         for t in range(T):
-            bounds.append((0.0, self.max_power_kw))  # P_ch
+            bounds.append((0.0, self.max_power_kw))
         for t in range(T):
-            bounds.append((0.0, self.max_power_kw))  # P_dis
+            bounds.append((0.0, self.max_power_kw))
         for t in range(T):
-            bounds.append((self.soc_min, self.soc_max))  # SoC
+            bounds.append((self.soc_min, self.soc_max))
         for t in range(T):
-            bounds.append((0.0, None))  # P_grid_import
+            bounds.append((0.0, None))
         for t in range(T):
-            bounds.append((0.0, None))  # P_curtail
+            bounds.append((0.0, None))
 
-        # Equality Constraints: A_eq @ x == b_eq
-        # 1. SoC recursion:
-        #    For t=0: SoC_0 - eta_ch*P_ch_0 + (1/eta_dis)*P_dis_0 = soc_initial
-        #    For t>0: SoC_t - SoC_{t-1} - eta_ch*P_ch_t + (1/eta_dis)*P_dis_t = 0
-        # 2. Site power balance:
-        #    -P_ch_t + P_dis_t + P_grid_t - P_curt_t = base_demand_t - gen_t
         A_eq = np.zeros((2 * T, n_vars))
         b_eq = np.zeros(2 * T)
 
         for t in range(T):
-            # SoC balance (row t)
-            A_eq[t, 2 * T + t] = 1.0  # SoC_t
+            A_eq[t, 2 * T + t] = 1.0
             if t > 0:
-                A_eq[t, 2 * T + (t - 1)] = -1.0  # -SoC_{t-1}
-            A_eq[t, 0 * T + t] = -self.eta_ch  # -eta_ch * P_ch_t
-            A_eq[t, 1 * T + t] = (1.0 / self.eta_dis)  # +(1/eta_dis) * P_dis_t
+                A_eq[t, 2 * T + (t - 1)] = -1.0
+            A_eq[t, 0 * T + t] = -self.eta_ch
+            A_eq[t, 1 * T + t] = (1.0 / self.eta_dis)
             b_eq[t] = self.soc_initial if t == 0 else 0.0
 
-            # Power balance (row T + t)
-            A_eq[T + t, 0 * T + t] = -1.0  # -P_ch_t
-            A_eq[T + t, 1 * T + t] = 1.0   # +P_dis_t
-            A_eq[T + t, 3 * T + t] = 1.0   # +P_grid_t
-            A_eq[T + t, 4 * T + t] = -1.0  # -P_curt_t
+            A_eq[T + t, 0 * T + t] = -1.0
+            A_eq[T + t, 1 * T + t] = 1.0
+            A_eq[T + t, 3 * T + t] = 1.0
+            A_eq[T + t, 4 * T + t] = -1.0
             b_eq[T + t] = base_demand[t] - gen[t]
 
-        # Inequality Constraints: A_ub @ x <= b_ub
         # Clean-Charging / Anti-Battery-Paradox:
-        # If carbon intensity is above the clean threshold, limit charging strictly to local surplus
+        # In India, overnight coal baseload is ~750 gCO2/kWh.
+        # If carbon intensity is above the clean percentile, charging from grid is restricted.
         A_ub_list = []
         b_ub_list = []
 
@@ -131,18 +118,13 @@ class BatteryOptimizer:
             if enforce_clean_charging and carbon[t] > carbon_threshold:
                 surplus = max(0.0, gen[t] - base_demand[t])
                 row = np.zeros(n_vars)
-                row[0 * T + t] = 1.0  # P_ch_t <= surplus
+                row[0 * T + t] = 1.0
                 A_ub_list.append(row)
                 b_ub_list.append(surplus)
 
-        if A_ub_list:
-            A_ub = np.array(A_ub_list)
-            b_ub = np.array(b_ub_list)
-        else:
-            A_ub = None
-            b_ub = None
+        A_ub = np.array(A_ub_list) if A_ub_list else None
+        b_ub = np.array(b_ub_list) if b_ub_list else None
 
-        # Solve via HiGHS
         res = linprog(
             c,
             A_ub=A_ub,
@@ -172,7 +154,6 @@ class BatteryOptimizer:
         results["grid_import_kw"] = np.round(grid_vals, 2)
         results["renewable_curtailed_kw"] = np.round(curtail_vals, 2)
 
-        # Distinguish clean renewable charging vs. clean grid charging
         clean_charge = []
         for t in range(T):
             surplus = max(0.0, gen[t] - base_demand[t])
@@ -185,10 +166,10 @@ class BatteryOptimizer:
 
     def simulate_naive_baseline(self, horizon_df: pd.DataFrame) -> pd.DataFrame:
         """
-        Simulates standard legacy battery dispatch:
-        - Statically charges during fixed night hours (01:00 to 05:00) blindly.
-        - Discharges during fixed evening hours (18:00 to 21:00).
-        - Ignores carbon intensity and solar generation timing, triggering the Battery Paradox.
+        Simulates standard legacy battery dispatch common in Indian C&I facilities:
+        - Statically charges during night off-peak tariff (01:00 to 05:00) to save money.
+        - But overnight grid in India is 80%+ coal (~760 gCO2/kWh)!
+        - Then discharges 18:00 - 21:00. This triggers the Battery Paradox.
         """
         T = len(horizon_df)
         results = horizon_df.copy()
@@ -212,11 +193,11 @@ class BatteryOptimizer:
             p_ch = 0.0
             p_dis = 0.0
 
-            # Static naive schedule: Charge blindly 01:00 - 05:00
+            # Naive static schedule: Charge 01:00 - 05:00 blindly on coal baseload
             if 1 <= h <= 4:
                 space = self.soc_max - soc
                 p_ch = min(self.max_power_kw, space / self.eta_ch)
-            # Static naive schedule: Discharge 18:00 - 21:00
+            # Naive static schedule: Discharge 18:00 - 21:00
             elif 18 <= h <= 21:
                 available = soc - self.soc_min
                 p_dis = min(self.max_power_kw, available * self.eta_dis)
@@ -224,7 +205,6 @@ class BatteryOptimizer:
             soc = soc + (p_ch * self.eta_ch) - (p_dis / self.eta_dis)
             soc = np.clip(soc, self.soc_min, self.soc_max)
 
-            # Grid import and curtailment under naive dispatch
             net_need = (d + p_ch) - (g + p_dis)
             if net_need > 0:
                 p_grid = net_need

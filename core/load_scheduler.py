@@ -1,9 +1,10 @@
 """
 GridSense AI - Layer 2B: Carbon-Aware Load Scheduling (Demand Arm)
-Implements intelligent demand-side management as specified in PPT Slide 2, 3, & 4:
-- Shifts flexible loads (EVs, Data Center AI training, HVAC/Cold storage, Water pumps)
-  into ultra-clean & low-cost forecasted windows.
-- Prevents the 'Blind Plug-in' problem where devices consume high-carbon electricity.
+Calibrated for Indian Commercial, Municipal & Industrial Demand Response:
+- Commercial EV Fleet Charging (Tata Ace EV, electric delivery vans, 3-wheelers)
+- Data Center & Institutional AI Compute Clusters (Tech Parks / Pune / Thane)
+- APMC Agricultural Cold Storage & Campus HVAC Chiller Pre-Cooling
+- MIDC / Municipal Water Treatment & Pumping
 - Formulated as a Linear Program (LP) using SciPy's HiGHS solver.
 """
 
@@ -18,7 +19,7 @@ class FlexibleLoadJob:
         self,
         job_id: str,
         name: str,
-        category: str,  # 'EV Charging', 'Data Center', 'Smart Appliance', 'Industrial'
+        category: str,
         energy_kwh: float,
         max_power_kw: float,
         earliest_start: int,
@@ -54,44 +55,44 @@ class CarbonAwareLoadScheduler:
 
     def _create_standard_benchmark_jobs(self) -> List[FlexibleLoadJob]:
         """
-        Creates standard representative demand-response workloads.
+        Creates standard Indian commercial & institutional demand-response workloads.
         """
         return [
             FlexibleLoadJob(
                 job_id="job_ev_fleet",
-                name="Corporate EV Fleet Charging",
-                category="EV Charging",
-                energy_kwh=160.0,
-                max_power_kw=50.0,
+                name="Commercial EV Fleet Depot (Delivery 3W/4W)",
+                category="EV Mobility",
+                energy_kwh=150.0,
+                max_power_kw=45.0,
                 earliest_start=8,
                 deadline=18,
                 preemptible=True
             ),
             FlexibleLoadJob(
                 job_id="job_ai_training",
-                name="Data Center AI Model Training",
+                name="Campus & Tech Park Batch Compute Cluster",
                 category="Data Center",
-                energy_kwh=220.0,
-                max_power_kw=60.0,
+                energy_kwh=200.0,
+                max_power_kw=55.0,
                 earliest_start=6,
                 deadline=22,
                 preemptible=True
             ),
             FlexibleLoadJob(
                 job_id="job_hvac_thermal",
-                name="Thermal Cold-Storage & HVAC Pre-Cool",
-                category="Smart Appliance",
-                energy_kwh=90.0,
+                name="APMC Cold Storage & Chiller Pre-Cooling",
+                category="Thermal Storage",
+                energy_kwh=85.0,
                 max_power_kw=30.0,
-                earliest_start=9,
+                earliest_start=10,
                 deadline=17,
                 preemptible=True
             ),
             FlexibleLoadJob(
                 job_id="job_water_pumps",
-                name="Municipal Water Treatment & Pumping",
-                category="Industrial",
-                energy_kwh=75.0,
+                name="MIDC / Municipal Water Pumping Station",
+                category="Municipal Utilities",
+                energy_kwh=80.0,
                 max_power_kw=25.0,
                 earliest_start=7,
                 deadline=20,
@@ -103,10 +104,10 @@ class CarbonAwareLoadScheduler:
         self,
         horizon_df: pd.DataFrame,
         jobs: Optional[List[FlexibleLoadJob]] = None,
-        alpha_cost: float = 0.5  # Weight between Cost and Carbon
+        alpha_cost: float = 0.5  # Weight between Cost (₹) and Carbon
     ) -> pd.DataFrame:
         """
-        Solves optimal schedule placing loads in cleanest/cheapest time slots using HiGHS.
+        Solves optimal schedule placing loads in cleanest/cheapest ToD time slots using HiGHS.
         """
         if jobs is None:
             jobs = self.default_jobs
@@ -117,9 +118,8 @@ class CarbonAwareLoadScheduler:
 
         price = horizon_df.get("forecast_electricity_price_kwh", horizon_df["electricity_price_kwh"]).values
         carbon = horizon_df.get("forecast_grid_carbon_intensity", horizon_df["grid_carbon_intensity"]).values
-        carbon_cost_weight = 0.00012
+        carbon_cost_weight = 0.0040  # ₹ / gCO2
 
-        # Objective vector c:
         c = np.zeros(n_vars)
         for j_idx, job in enumerate(jobs):
             for t in range(T):
@@ -128,7 +128,6 @@ class CarbonAwareLoadScheduler:
                 carbon_term = (1.0 - alpha_cost) * carbon[t] * carbon_cost_weight
                 c[idx] = cost_term + carbon_term
 
-        # Variable Bounds:
         bounds = []
         for j_idx, job in enumerate(jobs):
             for t in range(T):
@@ -137,7 +136,6 @@ class CarbonAwareLoadScheduler:
                 else:
                     bounds.append((0.0, 0.0))
 
-        # Equality Constraints: each job must receive exactly job.energy_kwh
         A_eq = np.zeros((J, n_vars))
         b_eq = np.zeros(J)
         for j_idx, job in enumerate(jobs):
@@ -145,14 +143,12 @@ class CarbonAwareLoadScheduler:
                 A_eq[j_idx, j_idx * T + t] = 1.0
             b_eq[j_idx] = job.energy_kwh
 
-        # Inequality Constraints: facility max power limit per hour
         A_ub = np.zeros((T, n_vars))
         b_ub = np.full(T, self.facility_max_flexible_kw)
         for t in range(T):
             for j_idx in range(J):
                 A_ub[t, j_idx * T + t] = 1.0
 
-        # Solve
         res = linprog(
             c,
             A_ub=A_ub,
@@ -184,9 +180,8 @@ class CarbonAwareLoadScheduler:
         jobs: Optional[List[FlexibleLoadJob]] = None
     ) -> pd.DataFrame:
         """
-        Simulates the naive 'plug-and-run' baseline:
-        Loads start immediately upon earliest availability at maximum power until completed,
-        completely unaware of grid carbon peaks or high price periods.
+        Simulates naive unmanaged baseline:
+        Loads run immediately upon arrival at maximum power, unbothered by peak ToD tariff surcharges.
         """
         if jobs is None:
             jobs = self.default_jobs
