@@ -31,149 +31,255 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Humanized, Minimalist Black & White Theme
+# Commercial energy operations theme
 st.markdown("""
 <style>
-    /* Global Typography & Palette */
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-    
+
+    :root {
+        --ink: #172923;
+        --muted: #718078;
+        --green: #16835d;
+        --green-dark: #106648;
+        --line: #e3ebe6;
+        --canvas: #f4f7f5;
+    }
+
     html, body, [class*="css"] {
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-        color: #18181B;
-        background-color: #FFFFFF;
+        color: var(--ink);
     }
-    
-    /* Header section */
-    .brand-title {
-        font-size: 2.1rem;
+    .stApp { background: var(--canvas); }
+    [data-testid="stHeader"] { background: rgba(244, 247, 245, .88); }
+    [data-testid="stMainBlockContainer"] {
+        max-width: 1540px;
+        padding: 2rem 2.4rem 3rem;
+    }
+
+    .hero-shell {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+        padding: 26px 30px;
+        margin-bottom: 16px;
+        color: white;
+        background: linear-gradient(112deg, #12382c 0%, #17563f 68%, #217153 100%);
+        border: 1px solid rgba(255,255,255,.1);
+        border-radius: 18px;
+        box-shadow: 0 12px 30px rgba(20,57,43,.12);
+    }
+    .hero-eyebrow {
+        margin-bottom: 7px;
+        color: #a9d8bd;
+        font-size: .68rem;
         font-weight: 700;
-        letter-spacing: -0.03em;
-        color: #09090B;
-        margin-bottom: 2px;
+        letter-spacing: .15em;
+        text-transform: uppercase;
+    }
+    .brand-title {
+        font-size: 2rem;
+        font-weight: 700;
+        letter-spacing: -.045em;
+        color: #fff;
+        margin-bottom: 4px;
         line-height: 1.1;
     }
+    .brand-title span { color: #80d5a5; }
     .brand-tagline {
-        font-size: 0.95rem;
-        color: #52525B;
+        font-size: .9rem;
+        color: #d3e6dc;
         font-weight: 400;
-        margin-bottom: 14px;
+        margin: 0;
     }
-    
-    /* Minimalist metadata badges */
+    .hero-status {
+        min-width: 190px;
+        padding: 14px 17px;
+        color: #e5f4eb;
+        background: rgba(255,255,255,.09);
+        border: 1px solid rgba(255,255,255,.16);
+        border-radius: 12px;
+        font-size: .78rem;
+        text-align: right;
+    }
+    .hero-status strong {
+        display: block;
+        margin-top: 5px;
+        color: white;
+        font-size: 1.35rem;
+        letter-spacing: -.03em;
+    }
+    .status-dot {
+        display: inline-block;
+        width: 7px;
+        height: 7px;
+        margin-right: 7px;
+        background: #75e0a2;
+        border-radius: 50%;
+        box-shadow: 0 0 0 4px rgba(117,224,162,.14);
+    }
     .meta-bar {
         display: flex;
         flex-wrap: wrap;
-        gap: 8px;
-        margin-bottom: 24px;
-        padding-bottom: 16px;
-        border-bottom: 1px solid #E4E4E7;
+        gap: 9px;
+        margin-bottom: 20px;
     }
     .meta-badge {
         display: inline-flex;
         align-items: center;
-        padding: 4px 10px;
-        background: #F4F4F5;
-        border: 1px solid #E4E4E7;
-        border-radius: 4px;
-        font-size: 0.78rem;
+        padding: 7px 11px;
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        font-size: .74rem;
         font-weight: 500;
-        color: #27272A;
+        color: #66766e;
     }
     .meta-badge strong {
         font-weight: 600;
         margin-left: 4px;
+        color: var(--ink);
     }
-
-    /* Clean Card Metric Containers */
     .stat-card {
-        background: #FFFFFF;
-        border: 1px solid #E4E4E7;
-        border-radius: 6px;
-        padding: 16px 18px;
+        height: 100%;
+        min-height: 126px;
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 13px;
+        padding: 17px 17px 15px;
         margin-bottom: 12px;
-        transition: border-color 0.15s ease;
+        box-shadow: 0 3px 12px rgba(24,54,40,.035);
+        transition: transform .18s ease, box-shadow .18s ease;
     }
     .stat-card:hover {
-        border-color: #A1A1AA;
+        transform: translateY(-2px);
+        box-shadow: 0 9px 22px rgba(24,54,40,.08);
     }
     .stat-label {
-        font-size: 0.72rem;
+        font-size: .66rem;
         font-weight: 600;
         text-transform: uppercase;
-        letter-spacing: 0.06em;
-        color: #71717A;
-        margin-bottom: 6px;
+        letter-spacing: .075em;
+        color: var(--muted);
+        margin-bottom: 10px;
     }
     .stat-value {
-        font-size: 1.65rem;
+        font-size: clamp(1.25rem, 1.8vw, 1.8rem);
         font-weight: 700;
-        color: #09090B;
-        letter-spacing: -0.02em;
+        color: var(--ink);
+        letter-spacing: -.045em;
         line-height: 1.1;
     }
     .stat-sub {
-        font-size: 0.78rem;
+        font-size: .72rem;
         font-weight: 500;
-        color: #18181B;
-        margin-top: 6px;
+        color: var(--green-dark);
+        margin-top: 9px;
     }
-
-    /* Section Headers */
     .section-title {
-        font-size: 1.15rem;
-        font-weight: 600;
-        color: #09090B;
-        letter-spacing: -0.01em;
-        margin-top: 4px;
-        margin-bottom: 4px;
+        font-size: 1.22rem;
+        font-weight: 700;
+        color: var(--ink);
+        letter-spacing: -.025em;
+        margin: 10px 0 5px;
     }
     .section-desc {
-        font-size: 0.88rem;
-        color: #71717A;
-        margin-bottom: 16px;
+        font-size: .84rem;
+        color: var(--muted);
+        margin-bottom: 20px;
         line-height: 1.5;
     }
-
-    /* Informational notes */
     .doc-box {
-        background: #F4F4F5;
-        border: 1px solid #E4E4E7;
-        border-radius: 6px;
-        padding: 14px 16px;
-        font-size: 0.85rem;
-        color: #27272A;
+        height: 100%;
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 16px 18px;
+        font-size: .82rem;
+        color: #52635a;
         line-height: 1.5;
-        margin-bottom: 16px;
+        margin-bottom: 14px;
     }
-
-    /* Table styling */
+    .doc-box b { color: var(--ink); }
+    .stat-card,
+    .stat-card *,
+    .doc-box,
+    .doc-box *,
+    .meta-badge,
+    .meta-badge *,
+    .hero-shell,
+    .hero-shell * {
+        cursor: default;
+    }
     div[data-testid="stDataFrame"] {
-        border: 1px solid #E4E4E7;
-        border-radius: 6px;
+        overflow: hidden;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: white;
+    }
+    section[data-testid="stSidebar"] {
+        background: #142a23;
+        border-right: 1px solid #203b31;
+    }
+    section[data-testid="stSidebar"] > div { background: transparent; }
+    section[data-testid="stSidebar"] [data-testid="stMarkdownContainer"],
+    section[data-testid="stSidebar"] label,
+    section[data-testid="stSidebar"] p { color: #e4eee8; }
+    section[data-testid="stSidebar"] [data-testid="stCaptionContainer"] p { color: #a9beb2; }
+    section[data-testid="stSidebar"] hr { border-color: #345146; }
+    section[data-testid="stSidebar"] [data-baseweb="select"] > div {
+        background: #203b31;
+        border-color: #365447;
+    }
+    section[data-testid="stSidebar"] [data-baseweb="select"] * { color: #f4faf6; }
+    section[data-testid="stSidebar"] [data-testid="stSlider"] [role="slider"] {
+        background: #74d59a;
+        border-color: #74d59a;
+    }
+    div[data-testid="stTabs"] button {
+        color: #697970;
+        font-size: .82rem;
+        font-weight: 600;
+    }
+    div[data-testid="stTabs"] button[aria-selected="true"] { color: var(--green-dark); }
+    div[data-testid="stTabs"] [data-baseweb="tab-highlight"] { background: var(--green); }
+    div[data-testid="stTabs"] [data-baseweb="tab-border"] { background: var(--line); }
+    div[data-testid="stPlotlyChart"] {
+        padding: 8px 10px 2px;
+        background: white;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        box-shadow: 0 3px 12px rgba(24,54,40,.035);
+    }
+    @media (max-width: 760px) {
+        [data-testid="stMainBlockContainer"] { padding: 1.2rem 1rem 2rem; }
+        .hero-shell { align-items: flex-start; flex-direction: column; padding: 22px; }
+        .hero-status { width: 100%; text-align: left; }
+        .brand-title { font-size: 1.75rem; }
     }
 </style>
 """, unsafe_allow_html=True)
 
 
-# Plotly Minimalist Monochrome Theme Helper
+# Plotly theme shared across operational views
 PLOTLY_LAYOUT = dict(
     plot_bgcolor="#FFFFFF",
     paper_bgcolor="#FFFFFF",
-    font=dict(family="Inter, sans-serif", color="#27272A", size=11),
-    margin=dict(l=40, r=20, t=35, b=35),
+    font=dict(family="Inter, sans-serif", color="#31443a", size=11),
+    margin=dict(l=48, r=24, t=42, b=38),
     xaxis=dict(
         showgrid=True,
-        gridcolor="#F4F4F5",
-        linecolor="#E4E4E7",
-        tickcolor="#E4E4E7",
-        tickfont=dict(size=10, color="#71717A")
+        gridcolor="#edf2ef",
+        linecolor="#e3ebe6",
+        tickcolor="#e3ebe6",
+        tickfont=dict(size=10, color="#718078")
     ),
     yaxis=dict(
         showgrid=True,
-        gridcolor="#F4F4F5",
-        linecolor="#E4E4E7",
-        tickcolor="#E4E4E7",
-        tickfont=dict(size=10, color="#71717A")
+        gridcolor="#edf2ef",
+        linecolor="#e3ebe6",
+        tickcolor="#e3ebe6",
+        tickfont=dict(size=10, color="#718078")
     ),
     legend=dict(
         orientation="h",
@@ -181,7 +287,7 @@ PLOTLY_LAYOUT = dict(
         y=1.02,
         xanchor="right",
         x=1,
-        font=dict(size=11, color="#27272A")
+        font=dict(size=10, color="#52635a")
     )
 )
 
@@ -196,8 +302,8 @@ def load_and_train_system(model_type="random_forest"):
 
 
 # ---------------- Sidebar Controls ----------------
-st.sidebar.markdown("### GridSense AI")
-st.sidebar.caption("Unified Clean Electricity Management for Indian Facilities")
+st.sidebar.markdown("### GridSense <span style='color:#74d59a'>AI</span>", unsafe_allow_html=True)
+st.sidebar.caption("ENERGY INTELLIGENCE PLATFORM")
 st.sidebar.write("---")
 
 st.sidebar.markdown("**Simulation Parameters**")
@@ -277,19 +383,29 @@ impact = impact_engine.evaluate_system(
 
 
 # ---------------- Header & Meta ----------------
-st.markdown('<div class="brand-title">GridSense AI</div>', unsafe_allow_html=True)
-st.markdown(
-    '<div class="brand-tagline">Unified Machine Learning for Sustainable Electricity — One AI Core. Two Operational Arms. One Greener Grid.</div>',
-    unsafe_allow_html=True
-)
-
+scenario_labels = {
+    "normal": "Typical day",
+    "high_solar": "High solar",
+    "cloudy_storm": "Monsoon / cloudy",
+    "extreme_peak_pricing": "Peak pricing"
+}
 st.markdown("""
+<div class="hero-shell">
+    <div>
+        <div class="hero-eyebrow">Grid operations · Maharashtra</div>
+        <div class="brand-title">GridSense <span>AI</span></div>
+        <div class="brand-tagline">Clean energy, intelligently orchestrated.</div>
+    </div>
+    <div class="hero-status"><span class="status-dot"></span>Simulation ready<strong>24-hour outlook</strong></div>
+</div>
+""", unsafe_allow_html=True)
+
+st.markdown(f"""
 <div class="meta-bar">
-    <div class="meta-badge">Team:<strong>CodeCatalyst</strong></div>
-    <div class="meta-badge">Institution:<strong>A. P. Shah Institute of Technology</strong></div>
-    <div class="meta-badge">Hackathon:<strong>PCCOE Indradhanu — Better Tomorrow</strong></div>
-    <div class="meta-badge">Domain:<strong>Smart Cities, Energy & Circular Economy</strong></div>
-    <div class="meta-badge">Region:<strong>Maharashtra / Western India Grid</strong></div>
+    <div class="meta-badge">Grid region<strong>Western India</strong></div>
+    <div class="meta-badge">Day scenario<strong>{scenario_labels[scenario]}</strong></div>
+    <div class="meta-badge">Forecast model<strong>{selected_model.replace("_", " ").title()}</strong></div>
+    <div class="meta-badge">Tariff reference<strong>MSEDCL ToD</strong></div>
 </div>
 """, unsafe_allow_html=True)
 
@@ -346,11 +462,11 @@ st.write("")
 
 # ---------------- Main Navigation Tabs ----------------
 tab1, tab2, tab3, tab4, tab5 = st.tabs([
-    "Layer 1: Forecasting Core",
-    "Layer 2A: Battery Storage",
-    "Layer 2B: Demand Scheduling",
-    "Impact & Comparison",
-    "Project Architecture"
+    "Forecasting",
+    "Battery storage",
+    "Load scheduling",
+    "Business impact",
+    "Architecture"
 ])
 
 hours_x = [f"{h:02d}:00" for h in forecast_df["hour"]]
@@ -401,33 +517,33 @@ with tab1:
         )
     )
 
-    # 1. Generation: Crisp Charcoal & Grays
+    # 1. Generation: solar, wind, and combined output
     fig_fc.add_trace(
-        go.Bar(name="Solar PV (450 kWp)", x=hours_x, y=forecast_df["forecast_solar_generation_kw"], marker_color="#09090B", opacity=0.85),
+        go.Bar(name="Solar PV (450 kWp)", x=hours_x, y=forecast_df["forecast_solar_generation_kw"], marker_color="#e7ad45", opacity=0.9),
         row=1, col=1
     )
     fig_fc.add_trace(
-        go.Bar(name="Wind (250 kW)", x=hours_x, y=forecast_df["forecast_wind_generation_kw"], marker_color="#71717A", opacity=0.6),
+        go.Bar(name="Wind (250 kW)", x=hours_x, y=forecast_df["forecast_wind_generation_kw"], marker_color="#70b9ae", opacity=0.8),
         row=1, col=1
     )
     fig_fc.add_trace(
-        go.Scatter(name="Total Renewable", x=hours_x, y=forecast_df["forecast_total_renewable_kw"], mode="lines", line=dict(color="#18181B", width=2.5)),
+        go.Scatter(name="Total Renewable", x=hours_x, y=forecast_df["forecast_total_renewable_kw"], mode="lines", line=dict(color="#16835d", width=2.5)),
         row=1, col=1
     )
 
-    # 2. Tariff: High contrast line
+    # 2. Tariff
     fig_fc.add_trace(
-        go.Scatter(name="Tariff (₹/kWh)", x=hours_x, y=forecast_df["forecast_electricity_price_kwh"], mode="lines+markers", line=dict(color="#18181B", width=2), marker=dict(size=4)),
+        go.Scatter(name="Tariff (₹/kWh)", x=hours_x, y=forecast_df["forecast_electricity_price_kwh"], mode="lines+markers", line=dict(color="#4478a8", width=2.5), marker=dict(size=4, color="#4478a8")),
         row=2, col=1
     )
-    fig_fc.add_hline(y=7.80, line_dash="dash", line_color="#A1A1AA", annotation_text="Base Tariff (₹7.80)", row=2, col=1)
+    fig_fc.add_hline(y=7.80, line_dash="dash", line_color="#aab8b0", annotation_text="Base Tariff (₹7.80)", row=2, col=1)
 
-    # 3. Carbon: Charcoal line with subtle tint
+    # 3. Carbon intensity
     fig_fc.add_trace(
-        go.Scatter(name="Carbon Intensity", x=hours_x, y=forecast_df["forecast_grid_carbon_intensity"], mode="lines", line=dict(color="#27272A", width=2), fill='tozeroy', fillcolor='rgba(24, 24, 27, 0.05)'),
+        go.Scatter(name="Carbon Intensity", x=hours_x, y=forecast_df["forecast_grid_carbon_intensity"], mode="lines", line=dict(color="#cc775f", width=2.5), fill='tozeroy', fillcolor='rgba(204, 119, 95, 0.10)'),
         row=3, col=1
     )
-    fig_fc.add_hline(y=float(np.median(forecast_df["forecast_grid_carbon_intensity"])), line_dash="dot", line_color="#71717A", annotation_text="Thermal Baseload Median", row=3, col=1)
+    fig_fc.add_hline(y=float(np.median(forecast_df["forecast_grid_carbon_intensity"])), line_dash="dot", line_color="#aab8b0", annotation_text="Thermal Baseload Median", row=3, col=1)
 
     fig_fc.update_layout(**PLOTLY_LAYOUT)
     fig_fc.update_layout(height=680, barmode="stack", hovermode="x unified")
@@ -453,28 +569,28 @@ with tab2:
         )
 
         fig_bat.add_trace(
-            go.Bar(name="Solar Surplus Charge (kW)", x=hours_x, y=dispatch_df["battery_clean_charge_kw"], marker_color="#18181B"),
+            go.Bar(name="Solar Surplus Charge (kW)", x=hours_x, y=dispatch_df["battery_clean_charge_kw"], marker_color="#16835d"),
             row=1, col=1
         )
         fig_bat.add_trace(
-            go.Bar(name="Grid Charge (Clean Hours)", x=hours_x, y=dispatch_df["battery_grid_charge_kw"], marker_color="#71717A"),
+            go.Bar(name="Grid Charge (Clean Hours)", x=hours_x, y=dispatch_df["battery_grid_charge_kw"], marker_color="#70b9ae"),
             row=1, col=1
         )
         fig_bat.add_trace(
-            go.Bar(name="Peak Shaving Discharge (kW)", x=hours_x, y=-dispatch_df["battery_discharge_kw"], marker_color="#09090B", opacity=0.4),
+            go.Bar(name="Peak Shaving Discharge (kW)", x=hours_x, y=-dispatch_df["battery_discharge_kw"], marker_color="#4478a8", opacity=0.72),
             row=1, col=1
         )
 
         fig_bat.add_trace(
-            go.Scatter(name="GridSense SoC (%)", x=hours_x, y=dispatch_df["battery_soc_pct"], mode="lines", line=dict(color="#09090B", width=2.5)),
+            go.Scatter(name="GridSense SoC (%)", x=hours_x, y=dispatch_df["battery_soc_pct"], mode="lines", line=dict(color="#16835d", width=2.5)),
             row=2, col=1
         )
         fig_bat.add_trace(
-            go.Scatter(name="Naive Baseline SoC (%)", x=hours_x, y=naive_dispatch_df["naive_battery_soc_pct"], mode="lines", line=dict(color="#A1A1AA", dash="dot", width=1.8)),
+            go.Scatter(name="Naive Baseline SoC (%)", x=hours_x, y=naive_dispatch_df["naive_battery_soc_pct"], mode="lines", line=dict(color="#aab8b0", dash="dot", width=1.8)),
             row=2, col=1
         )
-        fig_bat.add_hline(y=15, line_dash="dash", line_color="#D4D4D8", annotation_text="Min Reserve (15%)", row=2, col=1)
-        fig_bat.add_hline(y=95, line_dash="dash", line_color="#D4D4D8", annotation_text="Max Limit (95%)", row=2, col=1)
+        fig_bat.add_hline(y=15, line_dash="dash", line_color="#c6d3cb", annotation_text="Min Reserve (15%)", row=2, col=1)
+        fig_bat.add_hline(y=95, line_dash="dash", line_color="#c6d3cb", annotation_text="Max Limit (95%)", row=2, col=1)
 
         fig_bat.update_layout(**PLOTLY_LAYOUT)
         fig_bat.update_layout(height=560, barmode="relative", hovermode="x unified")
@@ -518,14 +634,14 @@ with tab3:
     )
 
     fig_sched = go.Figure()
-    fig_sched.add_trace(go.Bar(name="Commercial EV Fleet Depot (Delivery 3W/4W)", x=hours_x, y=schedule_df["scheduled_job_ev_fleet_kw"], marker_color="#09090B"))
-    fig_sched.add_trace(go.Bar(name="Campus & Tech Park Compute Cluster", x=hours_x, y=schedule_df["scheduled_job_ai_training_kw"], marker_color="#52525B"))
-    fig_sched.add_trace(go.Bar(name="APMC Cold Storage & Chiller Pre-Cooling", x=hours_x, y=schedule_df["scheduled_job_hvac_thermal_kw"], marker_color="#A1A1AA"))
-    fig_sched.add_trace(go.Bar(name="MIDC / Municipal Water Pumping Station", x=hours_x, y=schedule_df["scheduled_job_water_pumps_kw"], marker_color="#D4D4D8"))
+    fig_sched.add_trace(go.Bar(name="Commercial EV Fleet Depot (Delivery 3W/4W)", x=hours_x, y=schedule_df["scheduled_job_ev_fleet_kw"], marker_color="#16835d"))
+    fig_sched.add_trace(go.Bar(name="Campus & Tech Park Compute Cluster", x=hours_x, y=schedule_df["scheduled_job_ai_training_kw"], marker_color="#4478a8"))
+    fig_sched.add_trace(go.Bar(name="APMC Cold Storage & Chiller Pre-Cooling", x=hours_x, y=schedule_df["scheduled_job_hvac_thermal_kw"], marker_color="#e7ad45"))
+    fig_sched.add_trace(go.Bar(name="MIDC / Municipal Water Pumping Station", x=hours_x, y=schedule_df["scheduled_job_water_pumps_kw"], marker_color="#70b9ae"))
 
     fig_sched.update_layout(**PLOTLY_LAYOUT)
     fig_sched.update_layout(
-        title=dict(text="Optimized Flexible Load Allocation Across Clean Solar Windows", font=dict(size=12, color="#27272A")),
+        title=dict(text="Optimized Flexible Load Allocation Across Clean Solar Windows", font=dict(size=12, color="#31443a")),
         barmode="stack",
         height=420,
         hovermode="x unified",
@@ -541,14 +657,14 @@ with tab3:
         x=hours_x,
         y=schedule_df["total_flexible_demand_kw"],
         mode="lines",
-        line=dict(color="#09090B", width=2.5)
+        line=dict(color="#16835d", width=2.5)
     ))
     fig_load_comp.add_trace(go.Scatter(
         name="Naive Baseline (Unmanaged Plug-in)",
         x=hours_x,
         y=naive_schedule_df["naive_flexible_demand_kw"],
         mode="lines",
-        line=dict(color="#A1A1AA", dash="dot", width=2)
+        line=dict(color="#aab8b0", dash="dot", width=2)
     ))
     fig_load_comp.update_layout(**PLOTLY_LAYOUT)
     fig_load_comp.update_layout(height=280, hovermode="x unified", yaxis=dict(title="Demand (kW)"))
@@ -607,18 +723,18 @@ with tab4:
             y=impact['gridsense']['grid_draw_series'],
             mode="lines",
             fill="tozeroy",
-            line=dict(color="#09090B", width=2),
-            fillcolor="rgba(24, 24, 27, 0.06)"
+            line=dict(color="#16835d", width=2),
+            fillcolor="rgba(22, 131, 93, 0.10)"
         ))
         fig_net.add_trace(go.Scatter(
             name="Naive Baseline Net Import (kW)",
             x=hours_x,
             y=impact['naive']['grid_draw_series'],
             mode="lines",
-            line=dict(color="#A1A1AA", dash="dash", width=1.5)
+            line=dict(color="#aab8b0", dash="dash", width=1.5)
         ))
         fig_net.update_layout(**PLOTLY_LAYOUT)
-        fig_net.update_layout(title=dict(text="Net Grid Import: Evening Peak Shaving", font=dict(size=12, color="#27272A")), height=320, hovermode="x unified", yaxis=dict(title="Net Grid Power (kW)"))
+        fig_net.update_layout(title=dict(text="Net Grid Import: Evening Peak Shaving", font=dict(size=12, color="#31443a")), height=320, hovermode="x unified", yaxis=dict(title="Net Grid Power (kW)"))
         st.plotly_chart(fig_net, use_container_width=True)
 
     st.write("---")
