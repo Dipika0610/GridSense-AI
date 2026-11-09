@@ -177,17 +177,17 @@ st.markdown("""
         margin-top: 9px;
     }
     .section-title {
-        font-size: 1.22rem;
+        font-size: 1.3rem;
         font-weight: 700;
-        color: var(--ink);
+        color: #172923 !important;
         letter-spacing: -.025em;
-        margin: 10px 0 5px;
+        margin: 14px 0 6px;
     }
     .section-desc {
-        font-size: .84rem;
-        color: var(--muted);
+        font-size: .88rem;
+        color: #4b5d54 !important;
         margin-bottom: 20px;
-        line-height: 1.5;
+        line-height: 1.55;
     }
     .doc-box {
         height: 100%;
@@ -195,12 +195,12 @@ st.markdown("""
         border: 1px solid var(--line);
         border-radius: 12px;
         padding: 16px 18px;
-        font-size: .82rem;
-        color: #52635a;
-        line-height: 1.5;
+        font-size: .85rem;
+        color: #263830 !important;
+        line-height: 1.55;
         margin-bottom: 14px;
     }
-    .doc-box b { color: var(--ink); }
+    .doc-box b { color: #172923 !important; }
     .stat-card,
     .stat-card *,
     .doc-box,
@@ -236,14 +236,109 @@ st.markdown("""
         background: #74d59a;
         border-color: #74d59a;
     }
-    div[data-testid="stTabs"] button {
-        color: #697970;
-        font-size: .82rem;
-        font-weight: 600;
+
+    /* Complete Tabs Container & High-Contrast Segmented Bar */
+    div[data-testid="stTabs"] {
+        margin-top: 18px !important;
+        margin-bottom: 26px !important;
     }
-    div[data-testid="stTabs"] button[aria-selected="true"] { color: var(--green-dark); }
-    div[data-testid="stTabs"] [data-baseweb="tab-highlight"] { background: var(--green); }
-    div[data-testid="stTabs"] [data-baseweb="tab-border"] { background: var(--line); }
+    div[data-testid="stTabs"] [data-baseweb="tab-list"] {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 12px !important;
+        background: #ffffff !important;
+        border: 1.5px solid #d5e3dc !important;
+        border-radius: 16px !important;
+        padding: 10px 12px !important;
+        box-shadow: 0 4px 16px rgba(23, 41, 35, 0.05) !important;
+    }
+
+    /* ALL TAB BUTTONS (DEFAULT / INACTIVE STATE) */
+    div[data-testid="stTabs"] button,
+    div[data-baseweb="tab-list"] button,
+    button[data-baseweb="tab"],
+    [data-baseweb="tab"] {
+        background-color: #edf4f0 !important;
+        border: 1.5px solid #cadcd2 !important;
+        border-radius: 10px !important;
+        padding: 10px 20px !important;
+        cursor: pointer !important;
+        transition: all 0.18s ease-in-out !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+    }
+
+    /* INACTIVE TAB LABELS - 100% VISIBLE DEEP FOREST INK */
+    div[data-testid="stTabs"] button *,
+    div[data-testid="stTabs"] button p,
+    div[data-testid="stTabs"] button span,
+    div[data-testid="stTabs"] button div,
+    button[data-baseweb="tab"] *,
+    button[data-baseweb="tab"] p,
+    button[data-baseweb="tab"] span,
+    button[data-baseweb="tab"] div,
+    button[data-baseweb="tab"] strong,
+    button[data-baseweb="tab"] [data-testid="stMarkdownContainer"] p,
+    [data-baseweb="tab"] * {
+        color: #172923 !important;
+        font-size: 0.92rem !important;
+        font-weight: 700 !important;
+        letter-spacing: -0.01em !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        text-shadow: none !important;
+    }
+
+    /* HOVER STATE FOR TABS */
+    div[data-testid="stTabs"] button:hover,
+    button[data-baseweb="tab"]:hover,
+    [data-baseweb="tab"]:hover {
+        background-color: #dcebe2 !important;
+        border-color: #a6c9b5 !important;
+        transform: translateY(-1px) !important;
+    }
+    div[data-testid="stTabs"] button:hover *,
+    button[data-baseweb="tab"]:hover *,
+    [data-baseweb="tab"]:hover * {
+        color: #0f6648 !important;
+    }
+
+    /* ACTIVE / SELECTED TAB BUTTON */
+    div[data-testid="stTabs"] button[aria-selected="true"],
+    div[data-baseweb="tab-list"] button[aria-selected="true"],
+    button[data-baseweb="tab"][aria-selected="true"],
+    [data-baseweb="tab"][aria-selected="true"] {
+        background-color: #16835d !important;
+        border-color: #106648 !important;
+        box-shadow: 0 4px 14px rgba(22, 131, 93, 0.32) !important;
+        transform: translateY(-1px) !important;
+    }
+
+    /* ACTIVE / SELECTED TAB LABELS - PURE CRISP WHITE */
+    div[data-testid="stTabs"] button[aria-selected="true"] *,
+    div[data-testid="stTabs"] button[aria-selected="true"] p,
+    div[data-testid="stTabs"] button[aria-selected="true"] span,
+    div[data-testid="stTabs"] button[aria-selected="true"] div,
+    div[data-testid="stTabs"] button[aria-selected="true"] strong,
+    button[data-baseweb="tab"][aria-selected="true"] *,
+    button[data-baseweb="tab"][aria-selected="true"] p,
+    button[data-baseweb="tab"][aria-selected="true"] span,
+    button[data-baseweb="tab"][aria-selected="true"] div,
+    button[data-baseweb="tab"][aria-selected="true"] strong,
+    button[data-baseweb="tab"][aria-selected="true"] [data-testid="stMarkdownContainer"] p,
+    [data-baseweb="tab"][aria-selected="true"] * {
+        color: #ffffff !important;
+        font-weight: 700 !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+    }
+
+    /* HIDE THE DEFAULT HIGHLIGHT BAR */
+    div[data-testid="stTabs"] [data-baseweb="tab-highlight"],
+    div[data-testid="stTabs"] [data-baseweb="tab-border"] {
+        display: none !important;
+        height: 0px !important;
+    }
     div[data-testid="stPlotlyChart"] {
         padding: 8px 10px 2px;
         background: white;
@@ -462,11 +557,11 @@ st.write("")
 
 # ---------------- Main Navigation Tabs ----------------
 tab1, tab2, tab3, tab4, tab5 = st.tabs([
-    "Forecasting",
-    "Battery storage",
-    "Load scheduling",
-    "Business impact",
-    "Architecture"
+    "📈 **Forecasting Core**",
+    "🔋 **Battery Storage (Supply Arm)**",
+    "⚡ **Load Scheduling (Demand Arm)**",
+    "🏆 **Business Impact & ROI**",
+    "📋 **Architecture & Methodology**"
 ])
 
 hours_x = [f"{h:02d}:00" for h in forecast_df["hour"]]
